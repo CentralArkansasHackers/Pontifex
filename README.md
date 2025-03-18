@@ -17,116 +17,203 @@ If you haven't read *Cryptonomicon*, stop everything and go read it. Seriously. 
 
 ---
 
-## 🎲 **Complete Algorithm Walkthrough**
+## 🎲 **Complete Algorithm Overview**
 
-Here's a comprehensive walkthrough of the Pontifex Cipher algorithm:
+Here's a high-level overview of how the Pontifex Cipher works:
+
+```mermaid
+flowchart TD
+    id1[Start with 54-card deck] --> id2[Generate keystream value]
+    id2 --> id3[Move Joker A down 1 position]
+    id3 --> id4[Move Joker B down 2 positions]
+    id4 --> id5[Triple cut around jokers]
+    id5 --> id6[Count cut based on bottom card]
+    id6 --> id7[Find output card]
+    id7 --> id8{Is output card a joker?}
+    id8 -->|Yes| id3
+    id8 -->|No| id9[Return keystream value]
+    id9 --> id10{Need more values?}
+    id10 -->|Yes| id3
+    id10 -->|No| id11[End keystream generation]
+    id11 --> id12[Combine keystream with message]
+    style id1 fill:#d0f0c0
+    style id11 fill:#d0f0c0
+    style id12 fill:#f9d5e5
+```
 
 ### 🎴 **Initial Setup**
 
-1. **Start with a standard deck of cards** plus two jokers (54 cards total)
-2. **Assign values to each card**:
-   - **A through K** (1-13) of each suit
-   - **Bridge ordering** for suits: ♣️ Clubs (1-13), ♦️ Diamonds (14-26), ♥️ Hearts (27-39), ♠️ Spades (40-52)
-   - **Joker A = 53, Joker B = 53** (both jokers have the same value, but are distinct cards)
+Before we begin, we need to assign values to each card in the deck:
 
-### 🔄 **Keystream Generation**
-
-Follow these steps to generate each keystream value:
-
-#### 📊 **Step 1: Move Joker A Down One Position**
-
-**Before:**
+```mermaid
+classDiagram
+    class CardValues {
+        Clubs(♣️): 1-13
+        Diamonds(♦️): 14-26
+        Hearts(♥️): 27-39
+        Spades(♠️): 40-52
+        Jokers: 53
+    }
+    
+    class Clubs {
+        A♣️: 1
+        2♣️: 2
+        3♣️: 3
+        ...
+        J♣️: 11
+        Q♣️: 12
+        K♣️: 13
+    }
+    
+    class Diamonds {
+        A♦️: 14
+        2♦️: 15
+        3♦️: 16
+        ...
+        J♦️: 24
+        Q♦️: 25
+        K♦️: 26
+    }
+    
+    class Hearts {
+        A♥️: 27
+        2♥️: 28
+        3♥️: 29
+        ...
+        J♥️: 37
+        Q♥️: 38
+        K♥️: 39
+    }
+    
+    class Spades {
+        A♠️: 40
+        2♠️: 41
+        3♠️: 42
+        ...
+        J♠️: 50
+        Q♠️: 51
+        K♠️: 52
+    }
+    
+    CardValues <|-- Clubs
+    CardValues <|-- Diamonds
+    CardValues <|-- Hearts
+    CardValues <|-- Spades
 ```
-[ ... 7♥️ 4♦️ JOKER_A 9♠️ ... ]
+
+### 🔄 **Keystream Generation Steps**
+
+#### 📊 **Step 1-2: Move the Jokers**
+
+```mermaid
+sequenceDiagram
+    participant Deck as Card Deck
+    Note over Deck: Initial state
+    Note over Deck: ... 7♥️ 4♦️ JOKER_A 9♠️ ...
+    Deck->>Deck: Move Joker A down 1 position
+    Note over Deck: ... 7♥️ 4♦️ 9♠️ JOKER_A ...
+    Deck->>Deck: Move Joker B down 2 positions
+    Note over Deck: ... 10♣️ JOKER_B 5♦️ Q♥️ ...
+    Note over Deck: becomes
+    Note over Deck: ... 10♣️ 5♦️ Q♥️ JOKER_B ...
 ```
 
-**After:**
-```
-[ ... 7♥️ 4♦️ 9♠️ JOKER_A ... ]
-```
+**Special cases:**
+- If Joker A is at the bottom, it wraps to position 1 (just after the top card)
+- If Joker B is at the bottom, it wraps to position 2
+- If Joker B is second-to-last, it wraps to position 1
 
-**Special case:** If Joker A is the bottom card, it wraps to position 1 (just after the top card).
+#### 📊 **Step 3: Triple Cut**
 
-#### 📊 **Step 2: Move Joker B Down Two Positions**
-
-**Before:**
-```
-[ ... 10♣️ JOKER_B 5♦️ Q♥️ ... ]
-```
-
-**After:**
-```
-[ ... 10♣️ 5♦️ Q♥️ JOKER_B ... ]
-```
-
-**Special case:** If Joker B is the bottom card, it wraps to position 2. If it's the second-to-last card, it wraps to position 1.
-
-#### 📊 **Step 3: Triple Cut Around Jokers**
-
-The triple cut swaps the cards above the first joker with the cards below the second joker, while keeping the jokers and cards between them in place.
-
-**Diagram:**
-```
-BEFORE:
-[ A B C D ] [ JOKER_1 E F G JOKER_2 ] [ H I J ]
-                 ^               ^
-                 |               |
-           First Joker     Second Joker
-
-AFTER:
-[ H I J ] [ JOKER_1 E F G JOKER_2 ] [ A B C D ]
+```mermaid
+sequenceDiagram
+    participant Deck as Card Deck
+    Note over Deck: Initial state
+    Note over Deck: [ A B C D ] [ JOKER_A E F G JOKER_B ] [ H I J ]
+    Note over Deck: First joker at position 5, Second joker at position 9
+    
+    Deck->>Deck: Identify three sections
+    Note over Deck: Section 1: [ A B C D ] (before first joker)
+    Note over Deck: Section 2: [ JOKER_A E F G JOKER_B ] (between and including jokers)
+    Note over Deck: Section 3: [ H I J ] (after second joker)
+    
+    Deck->>Deck: Swap sections 1 and 3
+    Note over Deck: After triple cut
+    Note over Deck: [ H I J ] [ JOKER_A E F G JOKER_B ] [ A B C D ]
 ```
 
 The order of the jokers doesn't matter - just find the topmost and bottommost joker.
 
 #### 📊 **Step 4: Count Cut**
 
-1. Look at the value of the **bottom card** (e.g., 7♥️ = 33)
-2. Count that many cards from the top of the deck
-3. Cut the deck at that point and move those cards just before the bottom card
-
-**Diagram:**
-```
-BEFORE (bottom card is 5♣️, value = 5):
-[ A B C D E ] [ 5♣️ ]
-  1 2 3 4 5      ^
-                  |
-             Bottom card
-
-AFTER:
-[ ] [ A B C D E ] [ 5♣️ ]
-     |         |     ^
-     |---------|     |
-  First 5 cards    Bottom card
+```mermaid
+sequenceDiagram
+    participant Deck as Card Deck
+    Note over Deck: Initial state
+    Note over Deck: [ A B C D E ] [ 5♣️ ]
+    Note over Deck: Bottom card value = 5
+    
+    Deck->>Deck: Count 5 cards from top
+    Note over Deck: [ A B C D E ] [ 5♣️ ]
+    Note over Deck: 1 2 3 4 5
+    
+    Deck->>Deck: Move counted cards before bottom card
+    Note over Deck: After count cut
+    Note over Deck: [ ] [ A B C D E ] [ 5♣️ ]
 ```
 
 The bottom card always stays at the bottom.
 
 #### 📊 **Step 5: Find Output Card**
 
-1. Look at the value of the **top card** (e.g., J♠️ = 50)
-2. Count that many cards from the top of the deck
-3. The card at that position is your output card
-4. Convert card value to a number between 1 and 26:
-   - If value > 26, subtract 26
-   - If it's a joker, skip this output and repeat from Step 1
+```mermaid
+flowchart TD
+    id1[Look at top card value] --> id2{Is value < deck size?}
+    id2 -->|No| id3[Skip and restart process]
+    id2 -->|Yes| id4[Count down that many cards]
+    id4 --> id5[Look at the card at that position]
+    id5 --> id6{Is it a joker?}
+    id6 -->|Yes| id3
+    id6 -->|No| id7[Convert card value to 1-26]
+    id7 --> id8[Use as keystream value]
+    
+    style id1 fill:#d0e0f0
+    style id8 fill:#f9d5e5
+```
 
-### 🔐 **Encrypting a Message**
+If the card value is > 26, subtract 26 to get a value between 1-26.
 
-1. **Convert your plaintext** to uppercase and remove spaces/punctuation
-2. **Assign numbers** to each letter (A=1, B=2, ..., Z=26)
-3. **Generate a keystream number** for each letter using the process above
-4. **Add** each plaintext number to its corresponding keystream number
-5. If the sum is > 26, **subtract 26**
-6. **Convert the resulting numbers back to letters**
+### 🔐 **Encryption and Decryption**
 
-### 🔓 **Decrypting a Message**
-
-1. **Convert your ciphertext** to numbers (A=1, B=2, ..., Z=26)
-2. **Generate the exact same keystream** (using the same initial deck arrangement)
-3. **Subtract** each keystream number from its corresponding ciphertext number
-4. If the result is < 1, **add 26**
-5. **Convert the resulting numbers back to letters**
+```mermaid
+flowchart LR
+    subgraph Encryption
+    direction TB
+    id1[Plaintext letter] --> id2[Convert to number]
+    id2 --> id3{Add keystream value}
+    id3 --> id4{Result > 26?}
+    id4 -->|Yes| id5[Subtract 26]
+    id4 -->|No| id6[Keep value]
+    id5 --> id7[Convert to letter]
+    id6 --> id7
+    end
+    
+    subgraph Decryption
+    direction TB
+    id8[Ciphertext letter] --> id9[Convert to number]
+    id9 --> id10{Subtract keystream value}
+    id10 --> id11{Result < 1?}
+    id11 -->|Yes| id12[Add 26]
+    id11 -->|No| id13[Keep value]
+    id12 --> id14[Convert to letter]
+    id13 --> id14
+    end
+    
+    style id1 fill:#d0f0c0
+    style id7 fill:#f9d5e5
+    style id8 fill:#f9d5e5
+    style id14 fill:#d0f0c0
+```
 
 ---
 
@@ -148,44 +235,38 @@ A♣️, 2♣️, 3♣️, 4♣️, 5♣️, 6♣️, 7♣️, 8♣️, 9♣️,
 JOKER_A, JOKER_B
 ```
 
-### 📝 **Encrypt the First Letter: "C" (value = 3)**
+### 📝 **The Encryption Process: Step by Step**
 
-#### 1. Move Joker A down one position
-```
-A♠️ ... K♣️, JOKER_B, JOKER_A
-```
+Here's a timeline view of how the first few letters get encrypted:
 
-#### 2. Move Joker B down two positions
+```mermaid
+gantt
+    title Encrypting "CRYPTONOMICON" - First Three Letters
+    dateFormat  YYYY-MM-DD
+    section C (value 3)
+    Move Joker A           :a1, 2023-01-01, 1d
+    Move Joker B           :a2, after a1, 1d
+    Triple Cut             :a3, after a2, 1d
+    Count Cut              :a4, after a3, 1d
+    Get Output (21)        :a5, after a4, 1d
+    C(3) + 21 = 24 = X     :milestone, after a5, 0d
+    
+    section R (value 18)
+    Move Joker A           :b1, after a5, 1d
+    Move Joker B           :b2, after b1, 1d
+    Triple Cut             :b3, after b2, 1d
+    Count Cut              :b4, after b3, 1d
+    Get Output (4)         :b5, after b4, 1d
+    R(18) + 4 = 22 = V     :milestone, after b5, 0d
+    
+    section Y (value 25)
+    Move Joker A           :c1, after b5, 1d
+    Move Joker B           :c2, after c1, 1d
+    Triple Cut             :c3, after c2, 1d
+    Count Cut              :c4, after c3, 1d
+    Get Output (6)         :c5, after c4, 1d
+    Y(25) + 6 = 31 → 5 = E :milestone, after c5, 0d
 ```
-A♠️ ... K♣️, JOKER_A, JOKER_B
-```
-
-#### 3. Triple cut around jokers
-```
-JOKER_A, JOKER_B, A♠️ ... K♣️
-```
-
-#### 4. Count cut based on bottom card (K♣️ = 13)
-```
-JOKER_B, A♠️ ... Q♣️, JOKER_A, K♣️
-```
-
-#### 5. Find the output card
-- Top card is JOKER_B (53)
-- Since the deck has 54 cards, we can't count 53 cards from the top
-- We need to repeat the process from Step 1
-
-#### Repeating for the first output:
-- After another iteration, we get an output card of 8♦️ (value = 21)
-- Our first keystream number is 21
-
-#### Encrypting the letter "C":
-- C = 3
-- 3 + 21 = 24
-- 24 = X
-- First letter of ciphertext is "X"
-
-### 📝 **Continuing the Process**
 
 Continuing this process for each letter, we'll eventually get a complete ciphertext. The full calculation would be:
 
