@@ -30,50 +30,59 @@ The cipher follows a series of steps to transform a deck into a keystream genera
    - If the selected card is a Joker, repeat the process.
 6. **Repeat** until enough keystream values are generated.
 
-### 🔢 **Mermaid Diagram of the Algorithm**
-```mermaid
-graph TD;
-    Start[Start Encryption Cycle] --> MoveJokerA[Move Joker A down 1]
-    MoveJokerA --> MoveJokerB[Move Joker B down 2]
-    MoveJokerB --> TripleCut[Perform Triple Cut]
-    TripleCut --> CountCut[Perform Count Cut]
-    CountCut --> OutputCard[Select Output Card]
-    OutputCard -- Joker? --> JokerCheck{Is it a Joker?}
-    JokerCheck -- Yes --> MoveJokerA
-    JokerCheck -- No --> UseOutput[Use as Keystream]
-    UseOutput --> MoreText{More text to process?}
-    MoreText -- Yes --> MoveJokerA
-    MoreText -- No --> End[End Encryption]
+### 🔥 **Triple Cut: Step-by-Step Breakdown**
+#### 1️⃣ **Initial Deck (Before the Triple Cut)**
+Let’s say we have this deck:
+```plaintext
+[3C, 7D, JOKER_A, 5H, 9S, 2H, JOKER_B, KD, 8C, 10S]
+```
+Where:
+- **JOKER_A** is at index **2**
+- **JOKER_B** is at index **6**
+
+#### 2️⃣ **Identify the Three Sections**
+The deck is divided into **three parts**:
+- **Top Section** (before first Joker)
+```plaintext
+[3C, 7D]
+```
+- **Middle Section** (between and including the Jokers)
+```plaintext
+[JOKER_A, 5H, 9S, 2H, JOKER_B]
+```
+- **Bottom Section** (after second Joker)
+```plaintext
+[KD, 8C, 10S]
 ```
 
-### 🎬 **Triple Cut Step-by-Step Explanation**
-1. Identify **Joker A** and **Joker B** in the deck.
-2. Split the deck into three sections:
-   - **Top section** (before the first Joker).
-   - **Middle section** (Joker A, all cards in between, and Joker B).
-   - **Bottom section** (after the second Joker).
-3. Swap the **top** and **bottom** sections.
-4. The **middle section** remains in place.
-
-```mermaid
-graph TD;
-    A[Top section before first Joker] -->|Moves to bottom| C[Bottom section after second Joker]
-    B[Joker A and middle section and Joker B] -->|Remains in place| B
-    C -->|Moves to top| A
+#### 3️⃣ **Perform the Triple Cut**
+Now, **swap** the **top** and **bottom** sections while keeping the **middle section** in place:
+```plaintext
+[KD, 8C, 10S, JOKER_A, 5H, 9S, 2H, JOKER_B, 3C, 7D]
 ```
+✅ **Triple Cut is complete!**
 
-### 🎬 **Count Cut Step-by-Step Explanation**
-1. Look at the **bottom card** in the deck.
-2. Count that many cards from the **top**.
-3. Move those cards and insert them **right before** the bottom card.
-4. The **bottom card remains in place**.
-
-```mermaid
-graph TD;
-    A[Top X cards determined by bottom card] -->|Moves before bottom card| C[Rest of deck]
-    B[Bottom card] -->|Remains in place| B
-    C -->|Becomes new top| A
+### 🎯 **Count Cut: Step-by-Step Breakdown**
+#### 1️⃣ **Initial Deck** (After Triple Cut)
+Let’s say the deck now looks like this:
+```plaintext
+[KD, 8C, 10S, JOKER_A, 5H, 9S, 2H, JOKER_B, 3C, 7D]
 ```
+The **bottom card** is **7D**, meaning we count **7 cards** from the top.
+
+#### 2️⃣ **Move the Top X Cards**
+The first **7 cards**:
+```plaintext
+[KD, 8C, 10S, JOKER_A, 5H, 9S, 2H]
+```
+These get moved **right before** the bottom card:
+
+#### 3️⃣ **Perform the Count Cut**
+New deck order:
+```plaintext
+[JOKER_B, 3C, KD, 8C, 10S, JOKER_A, 5H, 9S, 2H, 7D]
+```
+✅ **Count Cut is complete!**
 
 ---
 
