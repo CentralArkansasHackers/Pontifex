@@ -46,19 +46,32 @@ graph TD;
     MoreText -- No --> End[End Encryption]
 ```
 
-### 🎬 **Triple Cut Visualization**
+### 🎬 **Triple Cut Step-by-Step Explanation**
+1. Identify **Joker A** and **Joker B** in the deck.
+2. Split the deck into three sections:
+   - **Top section** (before the first Joker).
+   - **Middle section** (Joker A, all cards in between, and Joker B).
+   - **Bottom section** (after the second Joker).
+3. Swap the **top** and **bottom** sections.
+4. The **middle section** remains in place.
+
 ```mermaid
 graph TD;
-    A[Top Section before first Joker] -->|Moves to bottom| C[Bottom Section after second Joker]
-    B[Joker A & Middle Section & Joker B] -->|Remains in place| B
+    A[Top section before first Joker] -->|Moves to bottom| C[Bottom section after second Joker]
+    B[Joker A and middle section and Joker B] -->|Remains in place| B
     C -->|Moves to top| A
 ```
 
-### 🎬 **Count Cut Visualization**
+### 🎬 **Count Cut Step-by-Step Explanation**
+1. Look at the **bottom card** in the deck.
+2. Count that many cards from the **top**.
+3. Move those cards and insert them **right before** the bottom card.
+4. The **bottom card remains in place**.
+
 ```mermaid
 graph TD;
-    A[Top X Cards determined by bottom card] -->|Moves before bottom card| C[Rest of Deck]
-    B[Bottom Card] -->|Remains in place| B
+    A[Top X cards determined by bottom card] -->|Moves before bottom card| C[Rest of deck]
+    B[Bottom card] -->|Remains in place| B
     C -->|Becomes new top| A
 ```
 
