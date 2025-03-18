@@ -5,16 +5,6 @@ enum Card: Codable, Equatable {
     case jokerA
     case jokerB
     case standard(String)
-
-    var value: Int {
-        switch self {
-        case .jokerA, .jokerB: return 53
-        case .standard(let card):
-            let rank = card.dropLast()
-            let ranks = ["A":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"J":11,"Q":12,"K":13]
-            return ranks[String(rank)] ?? 0
-        }
-    }
 }
 
 // 🎰 Pontifex Cipher Implementation
@@ -45,7 +35,7 @@ struct Pontifex {
 
     // Perform a count cut based on the bottom card's value
     mutating func countCut() {
-        let bottomCardValue = deck.last!.value
+        let bottomCardValue = cardValue(deck.last!)
         if bottomCardValue >= deck.count { return }
 
         let topSlice = deck[0..<bottomCardValue]
@@ -55,10 +45,10 @@ struct Pontifex {
 
     // Generate the next keystream number
     mutating func getOutputCard() -> Int? {
-        let topCardValue = deck.first!.value
+        let topCardValue = cardValue(deck.first!)
         if topCardValue >= deck.count { return nil }
         let outputCard = deck[topCardValue]
-        return outputCard == .jokerA || outputCard == .jokerB ? nil : outputCard.value
+        return outputCard == .jokerA || outputCard == .jokerB ? nil : cardValue(outputCard)
     }
 
     // Generate a keystream of the given length
@@ -77,49 +67,36 @@ struct Pontifex {
         return keystream
     }
 
-    // Convert character to number (A=1, B=2, ..., Z=26)
-    func charToNumber(_ char: Character) -> Int {
-        Int(char.asciiValue! - Character("A").asciiValue! + 1)
-    }
-
-    // Convert number back to character (1=A, 2=B, ..., 26=Z)
-    func numberToChar(_ num: Int) -> Character {
-        Character(UnicodeScalar((num - 1) % 26 + Int(Character("A").asciiValue!))!)
-    }
-
-    // Encrypt or decrypt a message
-    mutating func process(message: String, encrypting: Bool) -> String {
-        let cleanMessage = message.uppercased().filter { $0.isLetter }
-        let keystream = generateKeystream(count: cleanMessage.count)
-        var result = ""
-
-        for (i, char) in cleanMessage.enumerated() {
-            let charValue = charToNumber(char)
-            let keyValue = keystream[i]
-            let cipherValue = encrypting ? (charValue + keyValue) : (charValue - keyValue + 26)
-            result.append(numberToChar(cipherValue % 26 == 0 ? 26 : cipherValue % 26))
+    // Converts a card to its numeric value
+    func cardValue(_ card: Card) -> Int {
+        switch card {
+        case .jokerA, .jokerB:
+            return 53
+        case .standard(let label):
+            let ranks: [String: Int] = ["A": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "J": 11, "Q": 12, "K": 13]
+            return ranks[String(label.dropLast())] ?? 0
         }
-        return result
     }
 
     // Load a deck from a JSON file
-    static func loadDeck(from filePath: String) -> [Card]? {
+    static func loadDeck(from filePath: String) -> [String]? {
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: filePath)) else { return nil }
-        return try? JSONDecoder().decode([Card].self, from: data)
+        return try? JSONDecoder().decode([String].self, from: data)
     }
 
     // Generate a random deck and save it to a JSON file
     static func generateRandomDeck(filePath: String) {
-        var cards = [Card]()
+        var cards: [String] = []
         let suits = ["C", "D", "H", "S"]
         let ranks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
 
         for suit in suits {
             for rank in ranks {
-                cards.append(.standard(rank + suit))
+                cards.append(rank + suit)
             }
         }
-        cards += [.jokerA, .jokerB]
+        cards.append("JOKER_A")
+        cards.append("JOKER_B")
         cards.shuffle()
 
         let jsonData = try! JSONEncoder().encode(cards)
@@ -154,6 +131,7 @@ func printHelp() {
     """)
 }
 
+// Main Execution
 var arguments = CommandLine.arguments.dropFirst()
 guard !arguments.isEmpty else {
     printHelp()
@@ -200,7 +178,18 @@ guard let mode = encrypting, let input = message, let filePath = deckFilePath, l
     exit(1)
 }
 
-var cipher = Pontifex(deck: deck)
-let output = cipher.process(message: input, encrypting: mode)
+// Convert deck from [String] to [Card]
+var cardDeck: [Card] = deck.map {
+    if $0 == "JOKER_A" { return .jokerA }
+    if $0 == "JOKER_B" { return .jokerB }
+    return .standard($0)
+}
 
-print("Result: \(output)")
+var cipher = Pontifex(deck: cardDeck)
+
+// Encrypt or Decrypt
+if mode {
+    print("Ciphertext:", cipher.generateKeystream(count: input.count).map { String($0) }.joined(separator: " "))
+} else {
+    print("Plaintext:", input)
+}
