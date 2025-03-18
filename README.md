@@ -30,8 +30,6 @@ The cipher follows a series of steps to transform a deck into a keystream genera
    - If the selected card is a Joker, repeat the process.
 6. **Repeat** until enough keystream values are generated.
 
-These values are then **added to** (for encryption) or **subtracted from** (for decryption) the numerical representation of the plaintext.
-
 ### 🔢 **Mermaid Diagram of the Algorithm**
 ```mermaid
 graph TD;
@@ -46,6 +44,22 @@ graph TD;
     UseOutput --> MoreText{More text to process?}
     MoreText -- Yes --> MoveJokerA
     MoreText -- No --> End[End Encryption]
+```
+
+### 🎬 **Triple Cut Visualization**
+```mermaid
+graph TD;
+    A[Top Section (before first Joker)] -->|Moves to bottom| C[Bottom Section (after second Joker)];
+    B[Joker A → Middle Section ← Joker B] -->|Remains in place| B;
+    C -->|Moves to top| A;
+```
+
+### 🎬 **Count Cut Visualization**
+```mermaid
+graph TD;
+    A[Top X Cards (based on bottom card value)] -->|Moves before bottom card| C[Rest of Deck];
+    B[Bottom Card] -->|Stays in place| B;
+    C -->|Becomes new top| A;
 ```
 
 ---
