@@ -49,15 +49,15 @@ graph TD;
 ### 🎬 **Triple Cut Visualization**
 ```mermaid
 graph TD;
-    A[Top Section (before Joker A)] -->|Moves to bottom| C[Bottom Section (after Joker B)]
-    B[Joker A → Middle Section ← Joker B] -->|Stays in place| B
+    A[Top Section (before first Joker)] -->|Moves to bottom| C[Bottom Section (after second Joker)]
+    B[Joker A & Middle Section & Joker B] -->|Remains in place| B
     C -->|Moves to top| A
 ```
 
 ### 🎬 **Count Cut Visualization**
 ```mermaid
 graph TD;
-    A[Top X Cards (based on bottom card value)] -->|Moves before bottom card| C[Rest of Deck]
+    A[Top X Cards (determined by bottom card)] -->|Moves before bottom card| C[Rest of Deck]
     B[Bottom Card] -->|Remains in place| B
     C -->|Becomes new top| A
 ```
